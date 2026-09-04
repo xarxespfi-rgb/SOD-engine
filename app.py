@@ -12,7 +12,7 @@ st.caption("Sistema Operatiu de Deliberació Pedagògica connectat a Render")
 
 # Clau d'API i Endpoint de Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-RENDER_ENDPOINT = "https://sod-engine.onrender.com/evaluate"
+RENDER_ENDPOINT = "https://sod-engine.onrender.com/evaluate-hypothesis"
 
 if not GEMINI_API_KEY:
     st.error("⚠️ La variable GEMINI_API_KEY no està configurada als Secrets de Streamlit.")
