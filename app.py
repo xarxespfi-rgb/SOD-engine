@@ -13,7 +13,7 @@ st.caption("Sistema Operatiu de Deliberació Pedagògica connectat a Render")
 # Clau d'API i Endpoint de Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# URL actualitzada per coincidir exactament amb @app.post("/evaluate-hypothesis") de main.py
+# URL configurada per coincidir amb @app.post("/evaluate-hypothesis") de main.py
 RENDER_ENDPOINT = "https://sod-engine.onrender.com/evaluate-hypothesis"
 
 if not GEMINI_API_KEY:
@@ -68,10 +68,11 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
         st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Deliberant amb Gemini..."):
+        with st.spinner("Deliberant amb Gemini 3.1 Flash-Lite..."):
             try:
+                # Crida utilitzant el model gemini-3.1-flash-lite
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.1-flash-lite',
                     contents=user_input,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
