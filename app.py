@@ -68,9 +68,9 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
         st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Deliberant amb Gemini 3.1 Flash-Lite..."):
+        with st.spinner("Deliberant amb el SOD Pedagògic..."):
             try:
-                # Crida utilitzant el model gemini-3.1-flash-lite
+                # 1. Primera crida a Gemini per analitzar l'entrada i detectar si cal cridar el backend
                 response = client.models.generate_content(
                     model='gemini-3.1-flash-lite',
                     contents=user_input,
@@ -81,38 +81,50 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
                     )
                 )
 
-                # Comprovar si Gemini ha decidit executar la funció
+                # Comprovar si Gemini ha decidit executar la funció d'avaluació
                 if response.function_calls:
                     for call in response.function_calls:
                         if call.name == "evaluateHypothesis":
-                            st.info("🔄 Connectant amb el backend de Render (`sod-engine.onrender.com`)...")
+                            st.info("🔄 Processant dades amb el motor de càlcul a Render...")
                             payload = dict(call.args)
                             
-                            # Petició al backend de Render
+                            # 2. Petició HTTP POST al backend de Render
                             backend_res = requests.post(RENDER_ENDPOINT, json=payload)
                             
                             if backend_res.status_code == 200:
                                 res_data = backend_res.json()
-                                confidence = res_data.get("confidence_level", "DESCONEGUT")
-                                recommendation = res_data.get("recommendation", "")
-                                metrics = res_data.get("metrics", {})
                                 
-                                final_reply = f"### 📊 Resultats del Motor de Càlcul (Render)\n"
-                                final_reply += f"- **Nivell de Confiança:** `{confidence}`\n"
-                                if recommendation:
-                                    final_reply += f"- **Recomanació:** {recommendation}\n"
-                                if metrics:
-                                    final_reply += f"- **Mètriques:** {metrics.get('observations_count', 0)} observacions | {metrics.get('evidences_count', 0)} evidències\n"
+                                # 3. Re-enviem els resultats de Render a Gemini per a la deliberació final
+                                prompt_de_deliberacio = f"""
+                                L'usuari ha plantejat la següent situació pedagògica:
+                                "{user_input}"
+
+                                El motor de càlcul de Render ha retornat aquests resultats tècnics:
+                                {res_data}
+
+                                Com a SOD (Sistema Operatiu de Deliberació Pedagògica), redacta una resposta deliberativa completa, 
+                                rigorosa i ben estructurada per al docent. 
+                                Incorporeu les dades del backend (nivell de confiança, recomanació i mètriques) dins d'un raonament pedagògic natural, 
+                                respectant les vostres instruccions del sistema (separar fets, observacions, evidències i inferències, 
+                                i classificar el nivell d'intervenció en MACRO, MESO o MICRO).
+                                """
                                 
-                                final_reply += f"\n### 💬 Anàlisi del SOD\n"
-                                final_reply += f"Segons les evidències analitzades i el backend, la hipòtesi presenta un nivell de confiança **{confidence}**."
+                                final_analysis = client.models.generate_content(
+                                    model='gemini-3.1-flash-lite',
+                                    contents=prompt_de_deliberacio,
+                                    config=types.GenerateContentConfig(
+                                        system_instruction=SYSTEM_INSTRUCTION,
+                                        temperature=0.7
+                                    )
+                                )
+                                
+                                st.markdown(final_analysis.text)
+                                st.session_state.messages.append({"role": "assistant", "content": final_analysis.text})
                             else:
-                                final_reply = f"⚠️ Error en la connexió amb Render (Codi HTTP {backend_res.status_code})."
-                            
-                            st.markdown(final_reply)
-                            st.session_state.messages.append({"role": "assistant", "content": final_reply})
+                                error_msg = f"⚠️ Error en la connexió amb Render (Codi HTTP {backend_res.status_code})."
+                                st.error(error_msg)
                 else:
-                    # Resposta de text directe de Gemini
+                    # Resposta de text directe si no s'ha requerit l'avaluació d'hipòtesi
                     st.markdown(response.text)
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
 
