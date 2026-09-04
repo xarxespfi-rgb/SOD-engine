@@ -68,9 +68,9 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
     with st.chat_message("assistant"):
         with st.spinner("Deliberant amb Gemini..."):
             try:
-                # Crida amb el model de la capa gratuïta
+                # Utilitzem gemini-2.5-flash com a model actiu per defecte
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.5-flash',
                     contents=user_input,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
