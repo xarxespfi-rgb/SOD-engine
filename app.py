@@ -66,11 +66,11 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
         st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Deliberant amb Gemini 3.1 Pro..."):
+        with st.spinner("Deliberant amb Gemini..."):
             try:
-                # Crida a Gemini 3.1 Pro Preview
+                # Crida amb el model de la capa gratuïta
                 response = client.models.generate_content(
-                    model='gemini-3.1-pro-preview',
+                    model='gemini-1.5-flash',
                     contents=user_input,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
