@@ -12,6 +12,8 @@ st.caption("Sistema Operatiu de Deliberació Pedagògica connectat a Render")
 
 # Clau d'API i Endpoint de Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+# URL actualitzada per coincidir exactament amb @app.post("/evaluate-hypothesis") de main.py
 RENDER_ENDPOINT = "https://sod-engine.onrender.com/evaluate-hypothesis"
 
 if not GEMINI_API_KEY:
@@ -68,16 +70,15 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
     with st.chat_message("assistant"):
         with st.spinner("Deliberant amb Gemini..."):
             try:
-                # Utilitzem gemini-3.1-flash-lite com a model actiu per defecte
                 response = client.models.generate_content(
-    model='gemini-3.1-flash-lite',
-    contents=user_input,
-    config=types.GenerateContentConfig(
-        system_instruction=SYSTEM_INSTRUCTION,
-        tools=tools_config,
-        temperature=0.7
-    )
-)
+                    model='gemini-2.5-flash',
+                    contents=user_input,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        tools=tools_config,
+                        temperature=0.7
+                    )
+                )
 
                 # Comprovar si Gemini ha decidit executar la funció
                 if response.function_calls:
@@ -92,14 +93,18 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
                             if backend_res.status_code == 200:
                                 res_data = backend_res.json()
                                 confidence = res_data.get("confidence_level", "DESCONEGUT")
-                                math_matrix = res_data.get("matrix", {})
+                                recommendation = res_data.get("recommendation", "")
+                                metrics = res_data.get("metrics", {})
                                 
                                 final_reply = f"### 📊 Resultats del Motor de Càlcul (Render)\n"
                                 final_reply += f"- **Nivell de Confiança:** `{confidence}`\n"
-                                if math_matrix:
-                                    final_reply += f"- **Matriu:** {math_matrix}\n"
+                                if recommendation:
+                                    final_reply += f"- **Recomanació:** {recommendation}\n"
+                                if metrics:
+                                    final_reply += f"- **Mètriques:** {metrics.get('observations_count', 0)} observacions | {metrics.get('evidences_count', 0)} evidències\n"
+                                
                                 final_reply += f"\n### 💬 Anàlisi del SOD\n"
-                                final_reply += f"Segons les evidències i el motor de càlcul, la hipòtesi presenta un nivell de confiança **{confidence}**."
+                                final_reply += f"Segons les evidències analitzades i el backend, la hipòtesi presenta un nivell de confiança **{confidence}**."
                             else:
                                 final_reply = f"⚠️ Error en la connexió amb Render (Codi HTTP {backend_res.status_code})."
                             
