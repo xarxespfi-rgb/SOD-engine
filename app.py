@@ -68,16 +68,16 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
     with st.chat_message("assistant"):
         with st.spinner("Deliberant amb Gemini..."):
             try:
-                # Utilitzem gemini-2.5-flash com a model actiu per defecte
+                # Utilitzem gemini-3.1-flash-lite com a model actiu per defecte
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=user_input,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        tools=tools_config,
-                        temperature=0.7
-                    )
-                )
+    model='gemini-3.1-flash-lite',
+    contents=user_input,
+    config=types.GenerateContentConfig(
+        system_instruction=SYSTEM_INSTRUCTION,
+        tools=tools_config,
+        temperature=0.7
+    )
+)
 
                 # Comprovar si Gemini ha decidit executar la funció
                 if response.function_calls:
