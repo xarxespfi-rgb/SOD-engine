@@ -18,10 +18,11 @@ if not GEMINI_API_KEY:
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-tools_schema = [{
-    "name": "evaluateHypothesis",
-    "description": "Envia les dades d'una hipòtesi pedagògica al backend Python a Render.",
-    "parameters": {
+# Definició correcta de la funció utilitzant types.FunctionDeclaration
+evaluate_func = types.FunctionDeclaration(
+    name="evaluateHypothesis",
+    description="Envia les dades d'una hipòtesi pedagògica al backend Python a Render.",
+    parameters={
         "type": "OBJECT",
         "properties": {
             "context": {"type": "STRING"},
@@ -31,7 +32,9 @@ tools_schema = [{
         },
         "required": ["context", "observations", "evidences", "hypothesis"]
     }
-}]
+)
+
+tools_config = [types.Tool(function_declarations=[evaluate_func])]
 
 SYSTEM_INSTRUCTION = """
 Ets el SOD (Sistema Operatiu de Deliberació Pedagògica).
@@ -60,7 +63,7 @@ if user_input := st.chat_input("Escriu la situació pedagògica o hipòtesi...")
                     contents=user_input,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
-                        tools=tools_schema,
+                        tools=tools_config,
                         temperature=0.7
                     )
                 )
